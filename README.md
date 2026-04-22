@@ -20,7 +20,7 @@ To deploy large models locally on limited RAM, quantization is required. This pr
 ### Prepare the Environment
 1. Make scripts executable:
     ```bash
-    chmod +x build.sh run.sh
+    chmod +x build.sh run-iq3.sh run-vision-iq3.sh run-q8.sh
     ```
 
 2. Download one of the following model pairs from Huggingface and place them in the host directory `../LLMs` (relative to the project root):
@@ -35,7 +35,7 @@ To deploy large models locally on limited RAM, quantization is required. This pr
     https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/main/mmproj-F32.gguf?download=true
     ```
 
-3. Configure the model in `run.sh`:
+3. Configure the model in `run-iq3.sh` and `run-vision-iq3.sh`:
     ```bash
     MODEL_PATH="/models/unsloth/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf"
     #MODEL_PATH="/models/YTan2000/Qwen3.6-35B-A3B-TQ3_4S/Qwen3.6-35B-A3B-TQ3_4S.gguf"
@@ -49,14 +49,24 @@ We need a 2 step build, because the cmake/TurboQuant build only works when the D
     ./build.sh
     ```
 
-5. Run the server:
+5. Run the server (GPU, IQ3 quantization):
     ```bash
-    ./run.sh
+    ./run-iq3.sh
     ```
+
+### Vision (multimodal) mode
+
+To run the vision model with image understanding, use the vision variant:
+
+```bash
+./run-vision-iq3.sh
+```
+
+This is the same model as `run-iq3.sh` but with `--mmproj` loaded for multimodal capabilities and `--no-mmproj-offload` to keep the mmproj in CPU memory.
 
 ## Server Parameters
 
-By default `run.sh` starts the server with the following options:
+By default `run-iq3.sh` starts the server with the following options:
 
 | Parameter | Description |
 |---|---|
@@ -67,6 +77,7 @@ By default `run.sh` starts the server with the following options:
 | `-ctk q4_0 -ctv tq3_0` | TurboQuant KV cache compression (Q4_0 for KV, TQ3_0 for self-attention) |
 | `-fa on` | Flash attention enabled |
 | `--jinja` | Jinja templating enabled |
+| `--no-mmproj-offload` | Multimodal projector kept in CPU memory (vision mode only) |
 | `--reasoning off` | Reasoning mode disabled |
 | `--reasoning-budget 0` | No reasoning budget |
 | `--reasoning-format deepseek` | Reasoning format set to DeepSeek style |
@@ -115,6 +126,17 @@ By default `run.sh` starts the server with the following options:
 7. To stop the server gracefully, use `Ctrl+C` in the terminal where it's running.
 
 
-### Performance
+### CPU-only mode (Q8 quantization)
+
+For running without a GPU or with large models that don't fit in VRAM, use the CPU-only script:
+
+```bash
+chmod +x run-q8.sh
+./run-q8.sh
+```
+
+This runs the model using the `Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf` quantization, which requires ~40 GB system RAM. The script still uses TurboQuant KV cache compression (`-ctk q4_0 -ctv tq3_0`) for long context windows. Prompt preprocessing is and token generation is significant slower at 35 token/s.
+
+## Performance
 
 On my RTX 4070TI Super with 16 GByte VRAM, I reached 110 tokens per second with TurboQuant `-ctk q4_0 -ctv tq3_0 -fa on` with a context size of 160'000 tokens.

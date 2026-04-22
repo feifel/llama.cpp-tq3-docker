@@ -9,9 +9,11 @@ The repo does **not** contain `llama.cpp` source — `build.sh` clones `turbo-ta
 ## Developer commands
 
 ```bash
-chmod +x build.sh run.sh        # one-time
-./build.sh                      # build Docker image (must run with GPU access — CUDA build fails during docker build)
-./run.sh                        # start server on :8080 (env vars MODEL_DIR/MODEL_FILE not used; values hardcoded in run.sh)
+chmod +x build.sh run-iq3.sh run-vision-iq3.sh run-q8.sh      # one-time
+./build.sh                                                    # build Docker image (must run with GPU access — CUDA build fails during docker build)
+./run-iq3.sh                                                  # start server on :8080 (GPU, IQ3 quantization)
+./run-vision-iq3.sh                                           # start server on :8080 (GPU, vision/multimodal)
+./run-q8.sh                                                   # start server on :8080 (CPU, Q8 quantization)
 ```
 
 ## Key gotchas
@@ -20,8 +22,8 @@ chmod +x build.sh run.sh        # one-time
 - **`--cache-type-k turbo3 --cache-type-v turbo3`** works; `iso3`/`iso3` does not (causes 100% GPU, infinite context growth, crash). See README for details.
 - **Image name**: The built image is tagged `turboquant:latest` (not `turboquant:build`).
 - **Model path in container**: `build.sh` clones to `/workspace/llama-cpp-turboquant`; the server binary is at `build/bin/llama-server`. `run.sh` maps host `models/` to `/models` inside the container.
-- **run.sh line 18**: `-ctk q4_0 -ctv tq3_0 -fa on` — this is the TurboQuant cache config used at inference time.
-- **run.sh line 17**: `-ngl 99` (offload all layers), `-c 160000` (context window).
+- **run-iq3.sh line 19**: `-ctk q4_0 -ctv tq3_0 -fa on` — this is the TurboQuant cache config used at inference time.
+- **run-iq3.sh line 18**: `-ngl 99` (offload all layers), `-c 160000` (context window).
 
 ## File ownership
 
@@ -29,7 +31,7 @@ chmod +x build.sh run.sh        # one-time
 |---|---|
 | `Dockerfile` | Base image: nvidia/cuda:12.4.1-devel-ubuntu22.04 with build tools |
 | `build.sh` | Two-phase build: container → clone → cmake → compile → commit |
-| `run.sh` | Docker run wrapper for `llama-server` with GPU + model volume |
+| `run-iq3.sh` | Docker run wrapper for `llama-server` with GPU + model volume |
 | `README.md` | Setup steps, quirks, performance notes |
 
 No test, lint, CI, or lockfile — this is a deployment wrapper only.

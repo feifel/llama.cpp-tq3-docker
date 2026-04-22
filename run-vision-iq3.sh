@@ -4,7 +4,7 @@ set -euo pipefail
 PORT="8080"
 MODEL_DIR="../LLMs"
 MODEL_PATH="/models/unsloth/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf"
-#MODEL_PATH="/models/YTan2000/Qwen3.6-35B-A3B-TQ3_4S/Qwen3.6-35B-A3B-TQ3_4S.gguf"
+MMPROJ_PATH="/models/unsloth/Qwen3.6-35B-A3B-GGUF/mmproj-F32.gguf"
 
 docker run --rm -it \
   --gpus all \
